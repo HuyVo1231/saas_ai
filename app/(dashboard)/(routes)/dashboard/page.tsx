@@ -1,7 +1,5 @@
-import React from 'react'
-
 const DashboardPage = () => {
-  return <div>DashboardPage</div>
+  return <div className='flex flex-col'>DashboardPage</div>
 }
 
 export default DashboardPage
