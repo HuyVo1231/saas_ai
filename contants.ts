@@ -1,3 +1,5 @@
+import { ToolItemProps } from './type'
+
 export const MAX_FREE_COUNTS = 5
 
 export const THEME_MODES = [
@@ -5,7 +7,7 @@ export const THEME_MODES = [
   { label: 'Dark', value: 'dark' }
 ]
 
-export const TOOLS = [
+export const TOOLS: ToolItemProps[] = [
   {
     title: 'Conversation',
     icon: '/icons/conversation.svg',

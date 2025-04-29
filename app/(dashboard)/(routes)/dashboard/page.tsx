@@ -1,5 +1,11 @@
+import ToolsNavigation from '@/components/dashboard/tools-navigation'
+
 const DashboardPage = () => {
-  return <div className='flex flex-col'>DashboardPage</div>
+  return (
+    <div>
+      <ToolsNavigation />
+    </div>
+  )
 }
 
 export default DashboardPage
