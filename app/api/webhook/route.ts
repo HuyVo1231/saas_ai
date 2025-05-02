@@ -47,9 +47,9 @@ export async function POST(req: Request) {
   if (event.type === 'invoice.payment_succeeded') {
     const invoice = event.data.object as Stripe.Invoice
 
-    const subscription = (await stripe.subscriptions.retrieve(
+    const subscription = await stripe.subscriptions.retrieve(
       (invoice as any).subscription as string
-    )) as Stripe.Subscription
+    )
 
     await prismadb.userSubscription.update({
       where: {
