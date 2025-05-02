@@ -12,6 +12,7 @@ interface SubscriptionButtonProps {
   className?: string
   isProPlan: boolean
 }
+
 const SubscriptionButton = ({ className, isProPlan }: SubscriptionButtonProps) => {
   const [loading, setLoading] = useState(false)
 
