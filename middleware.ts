@@ -11,9 +11,6 @@ export default clerkMiddleware(async (auth, req) => {
 export const config = {
   matcher: [
     // Áp dụng middleware cho các route tĩnh và dynamic, trừ file tĩnh
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Áp dụng cho api và trpc, nhưng loại trừ api/webhook
-    '/api((?!/webhook).*)',
-    '/trpc(.*)'
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)'
   ]
 }
