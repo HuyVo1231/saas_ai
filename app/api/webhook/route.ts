@@ -26,22 +26,25 @@ export async function POST(req: Request) {
 
   try {
     if (event.type === 'checkout.session.completed') {
+      // Kiểm tra xem session.subscription có tồn tại không
       if (!session.subscription) {
-        throw new Error('Subscription ID is missing from session')
+        console.error('No subscription in session data', session)
+        return new NextResponse('No subscription in session data', { status: 400 })
       }
 
-      const subscription = await stripe.subscriptions.retrieve(session.subscription)
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      )
 
       if (!session?.metadata?.userId) {
         throw new Error('User ID is missing from session metadata')
       }
 
-      // Validate and convert timestamp
-      if (!subscription.current_period_end) {
-        throw new Error('Subscription period end date is missing')
+      if (!subscription.items.data[0].price) {
+        throw new Error('Price information is missing from subscription item')
       }
 
-      const periodEnd = new Date(subscription.current_period_end * 1000)
+      const periodEnd = new Date(subscription.items.data[0].current_period_end * 1000)
       if (isNaN(periodEnd.getTime())) {
         throw new Error('Invalid subscription period end date')
       }
@@ -60,18 +63,21 @@ export async function POST(req: Request) {
     }
 
     if (event.type === 'invoice.payment_succeeded') {
+      // Kiểm tra xem session.subscription có tồn tại không
       if (!session.subscription) {
-        throw new Error('Subscription ID is missing from session')
+        console.error('No subscription in session data', session)
+        return new NextResponse('No subscription in session data', { status: 400 })
       }
 
-      const subscription = await stripe.subscriptions.retrieve(session.subscription)
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      )
 
-      // Validate and convert timestamp
-      if (!subscription.current_period_end) {
-        throw new Error('Subscription period end date is missing')
+      if (!subscription.items.data[0].price) {
+        throw new Error('Price information is missing from subscription item')
       }
 
-      const periodEnd = new Date(subscription.current_period_end * 1000)
+      const periodEnd = new Date(subscription.items.data[0].current_period_end * 1000)
       if (isNaN(periodEnd.getTime())) {
         throw new Error('Invalid subscription period end date')
       }
