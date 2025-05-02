@@ -16,10 +16,10 @@ const SubscriptionButton = ({ className, isProPlan }: SubscriptionButtonProps) =
   const [loading, setLoading] = useState(false)
 
   const handleSubcribe = async () => {
-    // to do something
     try {
       setLoading(true)
       const { data } = await axios.get('/api/stripe')
+      location.href = data.url
     } catch (error) {
       toast.error('Something went wrong')
     } finally {
