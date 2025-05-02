@@ -14,3 +14,12 @@
 //     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)'
 //   ]
 // }
+
+import { clerkMiddleware } from '@clerk/nextjs/server'
+
+export default clerkMiddleware(async (_auth, _req) => {
+  // Không cần làm gì để middleware "pass qua"
+})
+export const config = {
+  matcher: ['/((?!.*).*)'] // hoặc đơn giản là không match gì cả
+}
