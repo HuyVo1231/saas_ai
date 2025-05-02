@@ -6,6 +6,8 @@ import prismadb from '@/lib/prismadb'
 import { stripe } from '@/lib/stripe'
 
 export async function POST(req: Request) {
+  console.log('✅ Webhook route HIT at', new Date().toISOString())
+
   const body = await req.text()
   const headersList = await headers()
   const signature = headersList.get('Stripe-Signature') as string
