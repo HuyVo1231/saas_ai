@@ -7,7 +7,7 @@ import { stripe } from '@/lib/stripe'
 
 export async function POST(req: Request) {
   const body = await req.text()
-  const signature = (await headers()).get('Stripe-Signature') as string
+  const signature = (await headers()).get('stripe-Signature') as string
 
   let event: Stripe.Event
 
@@ -18,57 +18,79 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     )
   } catch (error: any) {
+    console.error('Webhook Error:', error.message)
     return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 })
   }
 
   const session = event.data.object as Stripe.Checkout.Session
 
-  if (event.type === 'checkout.session.completed') {
-    // Verify we have a subscription ID
-    if (!session.subscription) {
-      return new NextResponse('Subscription ID is required', { status: 400 })
-    }
-
-    // Retrieve the subscription with proper typing
-    const subscription = await stripe.subscriptions.retrieve(session.subscription)
-
-    if (!session?.metadata?.userId) {
-      return new NextResponse('User id is required', { status: 400 })
-    }
-
-    await prismadb.userSubscription.create({
-      data: {
-        userId: session.metadata.userId,
-        stripeSubscriptionId: subscription.id,
-        stripeCustomerId: subscription.customer as string,
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        createdAt: new Date(),
-        updatedAt: new Date()
+  try {
+    if (event.type === 'checkout.session.completed') {
+      if (!session.subscription) {
+        throw new Error('Subscription ID is missing from session')
       }
-    })
-  }
 
-  if (event.type === 'invoice.payment_succeeded') {
-    // Verify we have a subscription ID
-    if (!session.subscription) {
-      return new NextResponse('Subscription ID is required', { status: 400 })
+      const subscription = await stripe.subscriptions.retrieve(session.subscription)
+
+      if (!session?.metadata?.userId) {
+        throw new Error('User ID is missing from session metadata')
+      }
+
+      // Validate and convert timestamp
+      if (!subscription.current_period_end) {
+        throw new Error('Subscription period end date is missing')
+      }
+
+      const periodEnd = new Date(subscription.current_period_end * 1000)
+      if (isNaN(periodEnd.getTime())) {
+        throw new Error('Invalid subscription period end date')
+      }
+
+      await prismadb.userSubscription.create({
+        data: {
+          userId: session.metadata.userId,
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer as string,
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: periodEnd,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      })
     }
 
-    // Retrieve the subscription with proper typing
-    const subscription = await stripe.subscriptions.retrieve(session.subscription)
-
-    await prismadb.userSubscription.update({
-      where: {
-        stripeSubscriptionId: subscription.id
-      },
-      data: {
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        updatedAt: new Date()
+    if (event.type === 'invoice.payment_succeeded') {
+      if (!session.subscription) {
+        throw new Error('Subscription ID is missing from session')
       }
-    })
-  }
 
-  return new NextResponse(null, { status: 200 })
+      const subscription = await stripe.subscriptions.retrieve(session.subscription)
+
+      // Validate and convert timestamp
+      if (!subscription.current_period_end) {
+        throw new Error('Subscription period end date is missing')
+      }
+
+      const periodEnd = new Date(subscription.current_period_end * 1000)
+      if (isNaN(periodEnd.getTime())) {
+        throw new Error('Invalid subscription period end date')
+      }
+
+      await prismadb.userSubscription.update({
+        where: {
+          stripeSubscriptionId: subscription.id
+        },
+        data: {
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: periodEnd,
+          updatedAt: new Date()
+        }
+      })
+    }
+
+    return new NextResponse(null, { status: 200 })
+  } catch (error: any) {
+    console.error('Webhook Processing Error:', error.message)
+    return new NextResponse(`Webhook Processing Error: ${error.message}`, { status: 400 })
+  }
 }
