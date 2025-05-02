@@ -10,8 +10,10 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
+    // Áp dụng middleware cho các route tĩnh và dynamic, trừ file tĩnh
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)'
+    // Áp dụng cho api và trpc, nhưng loại trừ api/webhook
+    '/api((?!/webhook).*)',
+    '/trpc(.*)'
   ]
 }
