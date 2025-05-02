@@ -24,47 +24,39 @@ export async function POST(req: Request) {
   const session = event.data.object as Stripe.Checkout.Session
 
   if (event.type === 'checkout.session.completed') {
+    // Verify we have a subscription ID
     if (!session.subscription) {
       return new NextResponse('Subscription ID is required', { status: 400 })
     }
 
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    )
+    // Retrieve the subscription with proper typing
+    const subscription = await stripe.subscriptions.retrieve(session.subscription)
 
     if (!session?.metadata?.userId) {
       return new NextResponse('User id is required', { status: 400 })
     }
 
-    await prismadb.userSubscription.upsert({
-      where: {
-        userId: session.metadata.userId
-      },
-      create: {
+    await prismadb.userSubscription.create({
+      data: {
         userId: session.metadata.userId,
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: subscription.customer as string,
         stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000)
-      },
-      update: {
-        stripeSubscriptionId: subscription.id,
-        stripeCustomerId: subscription.customer as string,
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000)
+        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     })
   }
 
   if (event.type === 'invoice.payment_succeeded') {
-    const invoice = event.data.object as Stripe.Invoice
-    if (!invoice.subscription) {
+    // Verify we have a subscription ID
+    if (!session.subscription) {
       return new NextResponse('Subscription ID is required', { status: 400 })
     }
 
-    const subscription = await stripe.subscriptions.retrieve(
-      invoice.subscription as string
-    )
+    // Retrieve the subscription with proper typing
+    const subscription = await stripe.subscriptions.retrieve(session.subscription)
 
     await prismadb.userSubscription.update({
       where: {
@@ -72,22 +64,8 @@ export async function POST(req: Request) {
       },
       data: {
         stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000)
-      }
-    })
-  }
-
-  if (event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object as Stripe.Subscription
-
-    await prismadb.userSubscription.updateMany({
-      where: {
-        stripeSubscriptionId: subscription.id
-      },
-      data: {
-        stripePriceId: null,
-        stripeSubscriptionId: null,
-        stripeCurrentPeriodEnd: null
+        stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        updatedAt: new Date()
       }
     })
   }

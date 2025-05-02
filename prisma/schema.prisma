@@ -8,22 +8,28 @@ datasource db {
 }
 
 model UserLimit {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  count     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  count                   Int       @default(0)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 }
 
 model UserSubscription {
-  id                     String   @id @default(cuid())
-  userId                 String   @unique
-  stripeCustomerId       String?  @unique
-  stripeSubscriptionId   String?  @unique
-  stripePriceId          String?
-  stripeCurrentPeriodEnd DateTime?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  stripeCustomerId        String?   @unique
+  stripeSubscriptionId    String?   @unique
+  stripePriceId           String?
+  stripeCurrentPeriodEnd  DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+}
 
-  @@map("user_subscriptions")
+model StripeWebhookEvent {
+  id                      String    @id @default(cuid())
+  eventId                 String    @unique
+  eventType               String
+  data                    String
+  createdAt               DateTime  @default(now())
 }
